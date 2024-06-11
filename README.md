@@ -3,8 +3,8 @@ collection of tools to speed up work in godot
 ⚠️ very much made for my specific workflow so probably not what you're looking for ⚠️
 
 auto script formatting:
-- adds spaces between operators (still a bit buggy at times) and removes double spaces
-- formats numbers ("0." -> "0.0", ".1" -> "0.1")
+- formats spaces `3+2*12`→`3 + 2 * 12` `var   a=3`→`var a = 3` `func a()->bool:`→`func a() -> bool:` (still buggy at times)
+- formats numbers (`0.` → `0.0`, `.1` → `0.1`)
 - ensures double empty lines between functions
 
 script generation:
