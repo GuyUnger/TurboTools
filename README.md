@@ -6,7 +6,6 @@ auto script formatting:
 - adds double empty lines between functions
 - adds spaces between operators (still a bit buggy at times) and removes double spaces
 - formats numbers ("0." -> "0.0", ".1" -> "0.1")
-- formats comments
 
 script generation:
 - <kbd>ctrl</kbd> + <kbd>:</kbd> to open code generation tools
