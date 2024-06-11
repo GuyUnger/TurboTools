@@ -27,7 +27,7 @@ func format_line(line_num: int):
 			if comment[0] == " ":
 				var before = text.substr(0, comment_start_column + 1)
 				var formatted_comment = comment
-				if not is_comment(line_num-1):
+				if not is_comment(line_num - 1):
 					# Capitalize first letter.
 					formatted_comment[1] = formatted_comment[1].to_upper()
 				if not is_comment(line_num + 1):
@@ -53,6 +53,8 @@ func format_line(line_num: int):
 			# Doesn't have two lines of space.
 			if code_editor.get_line(previous_line - 1).strip_edges() != "":
 				code_editor.insert_line_at(previous_line + 1, "")
+				#if not code_editor.get_line(previous_line - 1).strip_edges(true, false).begins_with("return"):
+					#code_editor.set_line(previous_line, "")
 				return true
 		else:
 			# Doesn't have any lines of space.

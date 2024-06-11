@@ -46,6 +46,7 @@ func _on_editor_script_changed(_script):
 		code_editor.add_child(generate)
 		
 		code_editor.caret_changed.connect(_on_caret_changed)
+	EditorInterface.get_resource_filesystem().scan()
 
 
 func _on_scene_changed(root: Node):

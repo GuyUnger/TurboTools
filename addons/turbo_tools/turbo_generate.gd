@@ -7,6 +7,8 @@ var turbo: TurboScript
 const ACTION_DIVIDER := "divider"
 const ACTION_CAPITALIZE_COMMENT := "capitalize comment"
 const ACTION_UPPERCASE_COMMENT := "uppercase comment"
+const ACTION_CLASS_NAME := "class name"
+const ACTION_CACHE_GET_NODE := "cache get node"
 
 var actions := [
 	"tool",
@@ -19,9 +21,11 @@ var actions := [
 	"var onready",
 	"func",
 	"signal",
+	ACTION_CLASS_NAME,
 	ACTION_DIVIDER,
 	ACTION_CAPITALIZE_COMMENT,
 	ACTION_UPPERCASE_COMMENT,
+	ACTION_CACHE_GET_NODE,
 ]
 
 @onready var results = %Results
@@ -143,6 +147,10 @@ func get_description(action) -> String:
 			return "Capitalizes comment"
 		ACTION_UPPERCASE_COMMENT:
 			return "Converts comment to uppercase"
+		ACTION_CLASS_NAME:
+			return "Generate a class name from the file name"
+		ACTION_CACHE_GET_NODE:
+			return "Selected node reference will be cached as an @onready variable"
 	return ""
 
 
@@ -301,7 +309,22 @@ func submit():
 				
 				var new_line = before_comment + " " + comment
 				code_editor.set_line(line_num, new_line)
-
+		ACTION_CLASS_NAME:
+			var file_path = EditorInterface.get_script_editor().get_current_script().resource_path
+			var generated_class_name = file_path.get_file().get_basename().to_pascal_case()
+			var line = "class_name %s" % [generated_class_name]
+			code_editor.insert_line_at(0, line)
+		ACTION_CACHE_GET_NODE:
+			var selection = get_selection().strip_edges()
+			printt(selection)
+			if not selection.begins_with("$") and not selection.begins_with("%"):
+				return
+			var variable_name = selection.substr(1).to_snake_case()
+			for line_index in code_editor.get_line_count():
+				var line = code_editor.get_line(line_index)
+				line = line.replace(selection, variable_name)
+				code_editor.set_line(line_index, line)
+			code_editor.insert_line_at(3, "@onready var %s = %s" % [variable_name, selection])
 
 func get_indentation(string: String) -> int:
 	var indentation := 0
