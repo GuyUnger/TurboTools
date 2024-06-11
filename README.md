@@ -3,9 +3,9 @@ collection of tools to speed up work in godot
 ⚠️ very much made for my specific workflow so probably not what you're looking for ⚠️
 
 auto script formatting:
-- adds double empty lines between functions
 - adds spaces between operators (still a bit buggy at times) and removes double spaces
 - formats numbers ("0." -> "0.0", ".1" -> "0.1")
+- ensures double empty lines between functions
 
 script generation:
 - <kbd>ctrl</kbd> + <kbd>:</kbd> to open code generation tools
