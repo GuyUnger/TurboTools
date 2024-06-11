@@ -2,6 +2,8 @@
 class_name TurboGenerate
 extends Control
 
+const GENERATE_SEARCH_ACTION_RESULT = preload("res://addons/turbo_tools/generate_search_action_result.tscn")
+
 var turbo: TurboScript
 
 const ACTION_DIVIDER := "divider"
@@ -9,6 +11,7 @@ const ACTION_CAPITALIZE_COMMENT := "capitalize comment"
 const ACTION_UPPERCASE_COMMENT := "uppercase comment"
 const ACTION_CLASS_NAME := "class name"
 const ACTION_CACHE_GET_NODE := "cache get node"
+const ACTION_PRELOAD := "preload"
 
 var actions := [
 	"tool",
@@ -26,6 +29,7 @@ var actions := [
 	ACTION_CAPITALIZE_COMMENT,
 	ACTION_UPPERCASE_COMMENT,
 	ACTION_CACHE_GET_NODE,
+	ACTION_PRELOAD,
 ]
 
 @onready var results = %Results
@@ -36,7 +40,7 @@ var current_action := ""
 
 
 func _ready():
-	result = load("res://addons/turbo_tools/generate_search_action_result.tscn").instantiate()
+	result = GENERATE_SEARCH_ACTION_RESULT.instantiate()
 
 
 func open():
@@ -151,6 +155,8 @@ func get_description(action) -> String:
 			return "Generate a class name from the file name"
 		ACTION_CACHE_GET_NODE:
 			return "Selected node reference will be cached as an @onready variable"
+		ACTION_PRELOAD:
+			return "Generate a const to preload this scene"
 	return ""
 
 
@@ -316,7 +322,6 @@ func submit():
 			code_editor.insert_line_at(0, line)
 		ACTION_CACHE_GET_NODE:
 			var selection = get_selection().strip_edges()
-			printt(selection)
 			if not selection.begins_with("$") and not selection.begins_with("%"):
 				return
 			var variable_name = selection.substr(1).to_snake_case()
@@ -325,6 +330,21 @@ func submit():
 				line = line.replace(selection, variable_name)
 				code_editor.set_line(line_index, line)
 			code_editor.insert_line_at(3, "@onready var %s = %s" % [variable_name, selection])
+		ACTION_PRELOAD:
+			if code_editor.get_caret_count() > 1:
+				return
+			var selection = get_selection().strip_edges()
+			if not selection.begins_with("load(") or not selection.ends_with(")"):
+				return
+			
+			var line_num = code_editor.get_selection_line()
+			var caret_col = code_editor.get_selection_from_column()
+			var cleared_line = code_editor.get_line(line_num).replace(selection, "")
+			code_editor.set_line(line_num, cleared_line)
+			code_editor.insert_line_at(2, "const  = pre%s" % [selection])
+			code_editor.set_caret_column(caret_col)
+			code_editor.add_caret(2, 6)
+			close()
 
 func get_indentation(string: String) -> int:
 	var indentation := 0

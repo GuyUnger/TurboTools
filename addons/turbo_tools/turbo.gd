@@ -1,6 +1,13 @@
 @tool
-
 class_name TurboScript extends EditorPlugin
+
+const ICON_CLEAR = preload("res://addons/turbo_tools/icons/Clear.svg")
+const ICON_PIN = preload("res://addons/turbo_tools/icons/Pin.svg")
+
+const TURBO_OPEN = preload("res://addons/turbo_tools/turbo_open.tscn")
+
+const TURBO_GENERATE = preload("res://addons/turbo_tools/turbo_generate.tscn")
+const STREAM_MODIFIED_NOTIFICATION = preload("res://addons/turbo_tools/modified_notification.wav")
 
 var script_editor: ScriptEditor
 var code_editor: CodeEdit
@@ -13,17 +20,28 @@ var format: TurboFormat = TurboFormat.new()
 
 var turbo_open_window: Window
 
+
+# Run Scene Pin
+var run_scene_button: Button
+var pinned_scene: String
+var run_scene_callable
+var popup_menu: PopupMenu
+
+
+
+
 func _enter_tree():
 	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
 	
-	generate = preload("res://addons/turbo_tools/turbo_generate.tscn").instantiate()
+	find_and_add_run_scene_pin()
+	generate = TURBO_GENERATE.instantiate()
 	generate.turbo = self
 	generate.visible = false
 	
 	format.turbo = self
 	
 	add_child(audio_modified)
-	audio_modified.stream = load("res://addons/turbo_tools/modified_notification.wav")
+	audio_modified.stream = STREAM_MODIFIED_NOTIFICATION
 	_on_editor_script_changed(null)
 	
 	scene_changed.connect(_on_scene_changed)
@@ -32,6 +50,12 @@ func _enter_tree():
 func _exit_tree():
 	generate.queue_free()
 	audio_modified.queue_free()
+	
+	
+	
+	run_scene_button.pressed.connect(run_scene_callable)
+	run_scene_button.pressed.disconnect(_on_run_scene_pressed)
+	run_scene_button.gui_input.disconnect(_on_run_scene_button_gui_input)
 
 
 func _on_editor_script_changed(_script):
@@ -46,7 +70,6 @@ func _on_editor_script_changed(_script):
 		code_editor.add_child(generate)
 		
 		code_editor.caret_changed.connect(_on_caret_changed)
-	EditorInterface.get_resource_filesystem().scan()
 
 
 func _on_scene_changed(root: Node):
@@ -58,6 +81,8 @@ func _on_scene_changed(root: Node):
 
 func _on_caret_changed():
 	if not is_instance_valid(code_editor):
+		return
+	if not EditorInterface.get_script_editor().get_current_script():
 		return
 	var caret_lines_current: Array[int] = []
 	for caret_index in code_editor.get_caret_count():
@@ -90,7 +115,7 @@ func _input(event):
 				add_child(turbo_open_window)
 				turbo_open_window.position = get_window().position
 				turbo_open_window.move_to_center()
-				var turbo_open = load("res://addons/turbo_tools/turbo_open.tscn").instantiate()
+				var turbo_open = TURBO_OPEN.instantiate()
 				turbo_open_window.add_child(turbo_open)
 				
 				if EditorInterface.get_editor_main_screen().get_child(2).visible:
@@ -98,3 +123,38 @@ func _input(event):
 				else:
 					turbo_open.load_scenes()
 
+
+func find_and_add_run_scene_pin():
+	run_scene_button = get_tree().root.find_children("", "EditorRunBar", true, false)[0].get_child(0).get_child(0).get_child(4)
+	run_scene_callable = run_scene_button.pressed.get_connections()[0].callable
+	run_scene_button.pressed.disconnect(run_scene_callable)
+	run_scene_button.pressed.connect(_on_run_scene_pressed)
+	run_scene_button.gui_input.connect(_on_run_scene_button_gui_input)
+	
+	popup_menu = PopupMenu.new()
+	popup_menu.add_icon_item(ICON_PIN, "Pin Current Scene")
+	popup_menu.id_pressed.connect(_on_popup_pressed)
+	
+	run_scene_button.add_child(popup_menu)
+
+
+func _on_run_scene_pressed():
+	if pinned_scene:
+		get_editor_interface().play_custom_scene(pinned_scene)
+	else:
+		get_editor_interface().play_custom_scene(get_editor_interface().get_edited_scene_root().scene_file_path)
+
+func _on_run_scene_button_gui_input(event):
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			if popup_menu.item_count > 1:
+				popup_menu.remove_item(1)
+			if pinned_scene != "":
+				popup_menu.add_icon_item(ICON_CLEAR, "Clear Pin (%s)" % pinned_scene)
+			popup_menu.popup(Rect2(run_scene_button.get_screen_position(), Vector2.ZERO))
+
+func _on_popup_pressed(id):
+	if id == 0:
+		pinned_scene = get_editor_interface().get_edited_scene_root().scene_file_path
+	else:
+		pinned_scene = ""

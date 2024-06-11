@@ -20,7 +20,7 @@ func format_line(line_num: int):
 	var text_stripped = code_editor.get_line(line_num).strip_edges()
 	
 	# Comments.
-	if text_stripped.begins_with("#"):
+	if text_stripped.begins_with("#") and false:
 		if text_stripped.length() > 2:
 			var comment_start_column = text.find("#")
 			var comment = text.substr(comment_start_column + 1)
@@ -173,6 +173,8 @@ func format_line(line_num: int):
 					text = text.insert(i, "0")
 					i += 1
 	
+	if text.ends_with(";"):
+		text = text.substr(0, text.length() - 1)
 	
 	# Removing trailing whitespace at end of line.
 	if text_stripped != "":
